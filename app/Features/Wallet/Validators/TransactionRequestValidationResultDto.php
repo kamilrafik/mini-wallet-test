@@ -1,0 +1,25 @@
+<?php
+
+namespace App\Features\Wallet\Validators;
+
+final class TransactionRequestValidationResultDto
+{
+    public function __construct(
+        private readonly array $errors = []
+    )
+    {
+    }
+
+    public function isSuccessful(): bool
+    {
+        return empty($this->errors);
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function getErrors(): array
+    {
+        return $this->errors;
+    }
+}
