@@ -9,7 +9,7 @@ use App\Features\Wallet\Dtos\Response\TransactionRequestProcessingFailureDto;
 use App\Features\Wallet\Dtos\Response\TransactionRequestProcessingResultDto;
 use App\Features\Wallet\Dtos\Response\TransactionRequestProcessingSuccessDto;
 use App\Features\Wallet\Events\TransactionCreated;
-use App\Features\Wallet\Factories\EventFactory;
+use App\Features\Wallet\Factories\EventDispatcher;
 use App\Features\Wallet\Models\Balance;
 use App\Features\Wallet\Models\Transaction;
 use App\Features\Wallet\Models\User;
@@ -33,7 +33,7 @@ final class WalletService
     private $prevBcscale = null;
 
     public function __construct(
-        private readonly EventFactory $eventFactory,
+        private readonly EventDispatcher $eventDispatcher,
     )
     {
     }
@@ -102,7 +102,7 @@ final class WalletService
             $this->restoreBcscale();
         }
 
-        event($this->eventFactory->transactionCreated($transactionCreationContext));
+        $this->eventDispatcher->dispatchTransactionCreated($transactionCreationContext);
 
         return new TransactionRequestProcessingSuccessDto(
             $transactionCreationContext->transactionUuid,
@@ -160,12 +160,17 @@ final class WalletService
             throw new \Exception(__('Failed to create transaction.'), $e->getCode(), $e);
         }
 
+        $senderBalance = Balance::query()->where('id', $validationContext->senderBalanceId)->first();
+        $receiverBalance = Balance::query()->where('id', $validationContext->receiverBalanceId)->first();
+
         return new TransactionCreationContext(
             $transaction->uuid,
             $transaction->amount,
             $transaction->created_at,
             $dto->fromUserUuid,
+            $senderBalance->balance,
             $dto->toUserUuid,
+            $receiverBalance->balance,
         );
     }
 

@@ -34,4 +34,6 @@ window.Echo = new Echo({
 });
 
 Echo.private(`users.${id}`)
-    .listen('.TransactionCreated', e => console.log(e));
+    .listen('.transaction.created', e => console.log(e));
+Echo.private(`users.${id}`)
+    .listen('.balance.updated', e => console.log(e));
