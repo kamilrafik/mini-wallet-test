@@ -5,7 +5,7 @@ namespace App\Features\Wallet\Validators;
 final class TransactionRequestValidationResultDto
 {
     public function __construct(
-        private readonly array $errors = []
+        private readonly array|string|null $errors = null
     )
     {
     }
@@ -20,6 +20,6 @@ final class TransactionRequestValidationResultDto
      */
     public function getErrors(): array
     {
-        return $this->errors;
+        return (array) $this->errors;
     }
 }
