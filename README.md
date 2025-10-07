@@ -8,7 +8,6 @@
 * ```./vendor/bin/sail npm install```
 * ```./vendor/bin/sail artisan key:generate``` 
 * ```./vendor/bin/sail artisan migrate```
-* ```./vendor/bin/sail artisan serve```
 * ```./vendor/bin/sail npm run dev```
 * Access ```http://localhost```
 
