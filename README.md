@@ -15,3 +15,4 @@
 # Implementation notes
 
 * Some built-in or default functionality has been installed with Laravel, Sail, and Vue. It has not been removed and was kept as is.
+* Authentication has been implemented with Breeze Vue scaffolding because it is not the primary subtask in the test and can be completely done with standard libraries.
