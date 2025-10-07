@@ -1,6 +1,6 @@
 # How to run the project locally?
 
-* Use PHP 8.4 locally in command line with the latest version of Composer. Turn off MySQL/MariaDB to free 3306 port. 
+* Use PHP 8.4 locally in command line with the latest version of Composer. Turn off local MySQL/MariaDB to free 3306 port. Turn off local webserver to free 80 port. 
 * ```composer install```
 * Copy ```.env.example``` to ```.env```
 * ```php artisan sail:install``` - choose MySQL and Soketi to be installed 
