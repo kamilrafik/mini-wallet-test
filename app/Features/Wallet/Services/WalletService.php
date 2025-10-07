@@ -4,6 +4,7 @@ namespace App\Features\Wallet\Services;
 
 use App\Features\Wallet\Dtos\Request\TransactionRequestCommissionedDto;
 use App\Features\Wallet\Dtos\Request\TransactionRequestDto;
+use App\Features\Wallet\Dtos\Response\Enums\TransactionSign;
 use App\Features\Wallet\Dtos\Response\TransactionDetailsDto;
 use App\Features\Wallet\Dtos\Response\TransactionRequestProcessingFailureDto;
 use App\Features\Wallet\Dtos\Response\TransactionRequestProcessingResultDto;
@@ -14,7 +15,11 @@ use App\Features\Wallet\Models\Balance;
 use App\Features\Wallet\Models\Transaction;
 use App\Features\Wallet\Models\User;
 use App\Features\Wallet\Policies\TransactionCommissionPolicy;
+use App\Features\Wallet\Repositories\BalanceRepository;
+use App\Features\Wallet\Repositories\UserRepository;
+use App\Features\Wallet\Services\Contexts\RichTransactionCreationContext;
 use App\Features\Wallet\Services\Contexts\TransactionCreationContext;
+use App\Features\Wallet\Services\Decorators\TransactionCreationContextDecorator;
 use App\Features\Wallet\Validators\Contexts\TransactionRequestValidationContext;
 use App\Features\Wallet\Validators\TransactionRequestValidator;
 use App\Support\Uuid;
@@ -34,6 +39,9 @@ final class WalletService
 
     public function __construct(
         private readonly EventDispatcher $eventDispatcher,
+        private readonly TransactionCreationContextDecorator $transactionCreationContextDecorator,
+        private readonly BalanceRepository $balanceRepository,
+        private readonly UserRepository $userRepository,
     )
     {
     }
@@ -41,7 +49,7 @@ final class WalletService
     protected function saveTransaction(
         TransactionRequestCommissionedDto $dto,
         TransactionRequestValidationContext $validationContext
-    ): TransactionCreationContext
+    ): RichTransactionCreationContext
     {
         $context = null;
         DB::beginTransaction();
@@ -56,7 +64,8 @@ final class WalletService
             throw $e;
         }
 
-        return $context;
+        // to perform in db transaction only minimal set of operations
+        return $this->transactionCreationContextDecorator->decorate($context);
     }
 
     public function createTransaction(Request $request): TransactionRequestProcessingResultDto
@@ -132,7 +141,7 @@ final class WalletService
                 'id' => $validationContext->senderBalanceId,
                 'balance' => $validationContext->senderBalanceAmount
             ])
-            ->update(['balance' => bcsub($validationContext->senderBalanceAmount, $dto->amount)])
+            ->decrement('balance', $dto->commissionedAmount)
         ) {
             throw new \Exception(__('Failed to subtract amount from sender\'s balance.'));
         }
@@ -160,17 +169,12 @@ final class WalletService
             throw new \Exception(__('Failed to create transaction.'), $e->getCode(), $e);
         }
 
-        $senderBalance = Balance::query()->where('id', $validationContext->senderBalanceId)->first();
-        $receiverBalance = Balance::query()->where('id', $validationContext->receiverBalanceId)->first();
-
         return new TransactionCreationContext(
             $transaction->uuid,
             $transaction->amount,
             $transaction->created_at,
             $dto->fromUserUuid,
-            $senderBalance->balance,
             $dto->toUserUuid,
-            $receiverBalance->balance,
         );
     }
 
@@ -182,33 +186,41 @@ final class WalletService
      */
     public function getLatestTransactions($userUuid, $limit = self::DEFAULT_LATEST_TRANSACTION_COUNT): array
     {
-        $user = User::query()->where('uuid', $userUuid)->first();
+        $user = $this->userRepository->findByUuid($userUuid);
         if ($user === null) {
             throw new \Exception(__('User not found.'));
         }
 
-        $balance = Balance::query()->where('user_id', $user->id)->first();
+        $balance = $this->balanceRepository->findByUserId($user->id);
         if ($balance === null) {
             throw new \Exception(__('Balance not found.'));
         }
 
-        $transactions = Transaction::query()->where('from_balance_id', $balance->id)->orderByDesc('id')->limit($limit)->get();
+        $transactions = Transaction::query()
+            ->where('from_balance_id', $balance->id)
+            ->orWhere('to_balance_id', $balance->id)
+            ->orderByDesc('id')
+            ->limit($limit)
+            ->get();
 
         $result = [];
         foreach ($transactions as $transaction) {
-            $balance = Balance::query()->where('id', $transaction->to_balance_id)->first();
-            $receiver = null;
-            if ($balance !== null) {
-                $receiver = User::query()->where('id', $balance->user_id)->first();
-            }
+            $senderBalance = $this->balanceRepository->findById($transaction->from_balance_id);
+            $sender = $senderBalance ? $this->userRepository->findById($senderBalance->user_id) : null;
+            $receiverBalance = $this->balanceRepository->findById($transaction->to_balance_id);
+            $receiver = $receiverBalance ? $this->userRepository->findById($receiverBalance->user_id) : null;
 
             $result[] = new TransactionDetailsDto(
                 $transaction->uuid,
                 $transaction->amount,
                 $transaction->created_at,
-                $receiver->uuid ?? null,
-                $receiver->name ?? null,
-                $receiver->email ?? null,
+                $balance->id === $transaction->to_balance_id ? TransactionSign::Plus : TransactionSign::Minus,
+                $sender?->uuid,
+                $sender?->name,
+                $sender?->email,
+                $receiver?->uuid,
+                $receiver?->name,
+                $receiver?->email,
             );
         }
 

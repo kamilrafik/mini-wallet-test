@@ -18,7 +18,11 @@ class TransactionCreated implements ShouldBroadcast
         private readonly string $amount,
         private readonly Carbon $createdAt,
         private readonly string $senderUuid,
+        private readonly string $senderName,
+        private readonly string $senderEmail,
         private readonly string $receiverUuid,
+        private readonly string $receiverName,
+        private readonly string $receiverEmail,
     )
     {
     }
@@ -34,5 +38,20 @@ class TransactionCreated implements ShouldBroadcast
     public function broadcastAs(): string
     {
         return 'transaction.created';
+    }
+
+    public function broadcastWith(): array
+    {
+        return [
+            'uuid' => $this->uuid,
+            'amount' => $this->amount,
+            'createdAt' => $this->createdAt,
+            'senderUuid' => $this->senderUuid,
+            'senderName' => $this->senderName,
+            'senderEmail' => $this->senderEmail,
+            'receiverUuid' => $this->receiverUuid,
+            'receiverName' => $this->receiverName,
+            'receiverEmail' => $this->receiverEmail,
+        ];
     }
 }

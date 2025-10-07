@@ -7,18 +7,23 @@ use App\Features\Wallet\Events\BalanceUpdated;
 use App\Features\Wallet\Events\TransactionCreated;
 use App\Features\Wallet\Models\Transaction;
 use App\Features\Wallet\Models\User;
+use App\Features\Wallet\Services\Contexts\RichTransactionCreationContext;
 use App\Features\Wallet\Services\Contexts\TransactionCreationContext;
 
 class EventDispatcher
 {
-    public function dispatchTransactionCreated(TransactionCreationContext $context): void
+    public function dispatchTransactionCreated(RichTransactionCreationContext $context): void
     {
         event(new TransactionCreated(
             $context->transactionUuid,
             $context->transactionAmount,
             $context->transactionCreatedAt,
             $context->senderUuid,
+            $context->senderName,
+            $context->senderEmail,
             $context->receiverUuid,
+            $context->receiverName,
+            $context->receiverEmail,
         ));
 
         event(new BalanceUpdated(

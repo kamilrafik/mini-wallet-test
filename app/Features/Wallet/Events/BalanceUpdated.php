@@ -31,4 +31,12 @@ class BalanceUpdated implements ShouldBroadcast
     {
         return 'balance.updated';
     }
+
+    public function broadcastWith(): array
+    {
+        return [
+            'userUuid' => $this->userUuid,
+            'balanceAmount' => $this->balanceAmount,
+        ];
+    }
 }

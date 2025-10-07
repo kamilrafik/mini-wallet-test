@@ -11,9 +11,7 @@ class TransactionCreationContext
         public readonly string $transactionAmount,
         public readonly Carbon $transactionCreatedAt,
         public readonly string $senderUuid,
-        public readonly string $senderBalance,
         public readonly string $receiverUuid,
-        public readonly string $receiverBalance
     )
     {
     }
