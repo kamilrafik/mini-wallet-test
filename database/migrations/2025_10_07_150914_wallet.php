@@ -11,8 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
+        Schema::table('users', function (Blueprint $table) {
+            $table->uuid()->after('id')->unique();
+        });
+
         Schema::create('balances', function (Blueprint $table) {
             $table->id();
+            $table->uuid()->unique();
             $table->unsignedBigInteger('user_id')->nullable();
             $table->foreign('user_id')->references('id')->on('users')->onDelete('SET NULL')->onUpdate('CASCADE');
             $table->decimal('balance', 65, 2)->default(0);
@@ -21,6 +26,8 @@ return new class extends Migration
 
         Schema::create('transactions', function (Blueprint $table) {
             $table->id();
+            $table->uuid()->unique();
+            $table->string('idempotency_key')->unique();
             $table->unsignedBigInteger('from_balance_id')->nullable();
             $table->foreign('from_balance_id')->references('id')->on('balances');
             $table->unsignedBigInteger('to_balance_id')->nullable();
@@ -37,6 +44,11 @@ return new class extends Migration
     public function down(): void
     {
         Schema::drop('transactions');
+
         Schema::drop('balances');
+
+        Schema::table('users', function (Blueprint $table) {
+            $table->dropColumn('uuid');
+        });
     }
 };
