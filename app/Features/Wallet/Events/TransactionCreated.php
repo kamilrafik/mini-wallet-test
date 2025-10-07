@@ -2,8 +2,6 @@
 
 namespace App\Features\Wallet\Events;
 
-use App\Features\Wallet\Dtos\Response\TransactionDetailsDto;
-use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
@@ -35,6 +33,6 @@ class TransactionCreated implements ShouldBroadcast
 
     public function broadcastAs(): string
     {
-        return basename(get_class($this));
+        return 'transaction.created';
     }
 }

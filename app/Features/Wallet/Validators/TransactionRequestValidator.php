@@ -22,11 +22,11 @@ final class TransactionRequestValidator
      */
     public static function validate(TransactionRequestCommissionedDto $dto): TransactionRequestValidationResultDto
     {
-        if (bccomp(0, $dto->amount) >= 0) {
+        if (bccomp('0', $dto->amount) >= 0) {
             return new TransactionRequestValidationFailureDto(__('Invalid transaction amount.'));
         }
 
-        if (bccomp(0, $dto->commissionedAmount) >= 0) {
+        if (bccomp('0', $dto->commissionedAmount) >= 0) {
             return new TransactionRequestValidationFailureDto(__('Invalid commissioned transaction amount.'));
         }
 

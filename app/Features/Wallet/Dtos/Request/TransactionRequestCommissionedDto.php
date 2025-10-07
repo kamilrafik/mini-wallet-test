@@ -10,6 +10,7 @@ final class TransactionRequestCommissionedDto extends TransactionRequestDto
         public readonly string $toUserUuid,
         public readonly string $amount,
         public readonly string $commissionedAmount,
+        public readonly string $commission,
     )
     {
         parent::__construct(

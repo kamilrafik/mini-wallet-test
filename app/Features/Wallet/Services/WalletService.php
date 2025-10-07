@@ -13,7 +13,7 @@ use App\Features\Wallet\Factories\EventFactory;
 use App\Features\Wallet\Models\Balance;
 use App\Features\Wallet\Models\Transaction;
 use App\Features\Wallet\Models\User;
-use App\Features\Wallet\Policies\TransactionRequestPolicy;
+use App\Features\Wallet\Policies\TransactionCommissionPolicy;
 use App\Features\Wallet\Services\Contexts\TransactionCreationContext;
 use App\Features\Wallet\Validators\Contexts\TransactionRequestValidationContext;
 use App\Features\Wallet\Validators\TransactionRequestValidator;
@@ -32,9 +32,6 @@ final class WalletService
 
     private $prevBcscale = null;
 
-    /** @var null|TransactionCreationContext */
-    private $lastTransactionCreationContext = null;
-
     public function __construct(
         private readonly EventFactory $eventFactory,
     )
@@ -44,34 +41,27 @@ final class WalletService
     protected function saveTransaction(
         TransactionRequestCommissionedDto $dto,
         TransactionRequestValidationContext $validationContext
-    ): TransactionRequestProcessingResultDto
+    ): TransactionCreationContext
     {
-        $transactionContext = null;
+        $context = null;
         DB::beginTransaction();
         try {
-            $transactionContext = $this->performTransactionSavingOperations(
+            $context = $this->performTransactionSavingOperations(
                 $dto,
                 $validationContext
             );
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
-            return TransactionRequestProcessingFailureDto::fromException($e);
+            throw $e;
         }
 
-        $this->lastTransactionCreationContext = $transactionContext;
-
-        return new TransactionRequestProcessingSuccessDto(
-            $transactionContext->transactionUuid,
-            $transactionContext->transactionAmount,
-            $transactionContext->transactionCreatedAt
-        );
+        return $context;
     }
 
     public function createTransaction(Request $request): TransactionRequestProcessingResultDto
     {
-        $result = null;
-        $this->lastTransactionCreationContext = null;
+        $transactionCreationContext = null;
 
         $dto = TransactionRequestDto::fromRequest($request);
 
@@ -91,7 +81,7 @@ final class WalletService
 
         $this->setBcscale();
         try {
-            $dto = TransactionRequestPolicy::apply($dto, self::BCSCALE);
+            $dto = TransactionCommissionPolicy::apply($dto);
 
             $validationResult = TransactionRequestValidator::validate($dto);
             if (!$validationResult->isSuccessful()) {
@@ -101,7 +91,7 @@ final class WalletService
                 );
             }
 
-            $result = $this->saveTransaction(
+            $transactionCreationContext = $this->saveTransaction(
                 $dto,
                 $validationResult->context
             );
@@ -112,11 +102,13 @@ final class WalletService
             $this->restoreBcscale();
         }
 
-        if ($result->isSuccessful()) {
-            event($this->eventFactory->transactionCreated($this->lastTransactionCreationContext));
-        }
+        event($this->eventFactory->transactionCreated($transactionCreationContext));
 
-        return $result;
+        return new TransactionRequestProcessingSuccessDto(
+            $transactionCreationContext->transactionUuid,
+            $transactionCreationContext->transactionAmount,
+            $transactionCreationContext->transactionCreatedAt
+        );
     }
 
     private function setBcscale()
@@ -162,7 +154,7 @@ final class WalletService
                 'from_balance_id' => $validationContext->senderBalanceId,
                 'to_balance_id' => $validationContext->receiverBalanceId,
                 'amount' => $dto->commissionedAmount,
-                'commission' => bcsub($dto->commissionedAmount, $dto->amount),
+                'commission' => $dto->commission,
             ]);
         } catch (\Exception $e) {
             throw new \Exception(__('Failed to create transaction.'), $e->getCode(), $e);
