@@ -9,7 +9,6 @@ use App\Features\Wallet\Dtos\Response\TransactionDetailsDto;
 use App\Features\Wallet\Dtos\Response\TransactionRequestProcessingFailureDto;
 use App\Features\Wallet\Dtos\Response\TransactionRequestProcessingResultDto;
 use App\Features\Wallet\Dtos\Response\TransactionRequestProcessingSuccessDto;
-use App\Features\Wallet\Events\TransactionCreated;
 use App\Features\Wallet\Factories\EventDispatcher;
 use App\Features\Wallet\Models\Balance;
 use App\Features\Wallet\Models\Transaction;
@@ -38,6 +37,7 @@ final class WalletService
     private $prevBcscale = null;
 
     public function __construct(
+        private readonly TransactionRequestValidator $transactionRequestValidator,
         private readonly EventDispatcher $eventDispatcher,
         private readonly TransactionCreationContextDecorator $transactionCreationContextDecorator,
         private readonly BalanceRepository $balanceRepository,
@@ -64,7 +64,7 @@ final class WalletService
             throw $e;
         }
 
-        // to perform in db transaction only minimal set of operations
+        // we implement enrichment necessary for events/UI separately to perform in db transaction only the minimal set of operations
         return $this->transactionCreationContextDecorator->decorate($context);
     }
 
@@ -74,6 +74,7 @@ final class WalletService
 
         $dto = TransactionRequestDto::fromRequest($request);
 
+        // cache lock is applied for maximum optimization to avoid processing multiple identical requests
         $lockKey = implode(
             '|',
             [
@@ -82,17 +83,17 @@ final class WalletService
                 $dto->toUserUuid,
             ]
         );
-        // cache lock is applied for maximum optimization to avoid processing multiple identical requests
         $lock = Cache::lock($lockKey, self::CACHE_LOCK_TIMEOUT);
         if (!$lock->get()) {
             return new TransactionRequestProcessingFailureDto(__('The request is in processing already.'));
         }
 
+        // such project-level setting is enough for test task; in production project it may be done in separate classes that are specific for each kind of operation
         $this->setBcscale();
         try {
             $dto = TransactionCommissionPolicy::apply($dto);
 
-            $validationResult = TransactionRequestValidator::validate($dto);
+            $validationResult = $this->transactionRequestValidator->validate($dto);
             if (!$validationResult->isSuccessful()) {
                 return new TransactionRequestProcessingFailureDto(
                     __('Validation error.'),
@@ -100,6 +101,8 @@ final class WalletService
                 );
             }
 
+            // note that we separate maximum of logic from db transaction;
+            // optimistic concurrency control is used
             $transactionCreationContext = $this->saveTransaction(
                 $dto,
                 $validationResult->context
@@ -131,6 +134,14 @@ final class WalletService
         $this->prevBcscale = null;
     }
 
+    /**
+     * Data operations are not moved into repository classes because they are extremely important and unique, but not something generic.
+     *
+     * @param TransactionRequestCommissionedDto $dto
+     * @param TransactionRequestValidationContext $validationContext
+     * @return TransactionCreationContext
+     * @throws \Exception
+     */
     private function performTransactionSavingOperations(
         TransactionRequestCommissionedDto $dto,
         TransactionRequestValidationContext $validationContext
@@ -179,6 +190,8 @@ final class WalletService
     }
 
     /**
+     * The method by itself just gives the simplest implementation of the task requirement to list transactions (I consciously skipped implementation of pagination).
+     *
      * @param $userUuid
      * @param $limit
      * @return TransactionDetailsDto[]
@@ -205,10 +218,11 @@ final class WalletService
 
         $result = [];
         foreach ($transactions as $transaction) {
+            // no reasons to cache anything here; it should be done either on storage level or on presentation level for old transactions
             $senderBalance = $this->balanceRepository->findById($transaction->from_balance_id);
-            $sender = $senderBalance ? $this->userRepository->findById($senderBalance->user_id) : null;
+            $sender = $this->userRepository->findById($senderBalance->user_id);
             $receiverBalance = $this->balanceRepository->findById($transaction->to_balance_id);
-            $receiver = $receiverBalance ? $this->userRepository->findById($receiverBalance->user_id) : null;
+            $receiver = $this->userRepository->findById($receiverBalance->user_id);
 
             $result[] = new TransactionDetailsDto(
                 $transaction->uuid,
@@ -229,11 +243,11 @@ final class WalletService
 
     public function getBalance($userUuid): ?string
     {
-        $user = User::query()->where('uuid', $userUuid)->first();
+        $user = $this->userRepository->findByUuid($userUuid);
         if (!$user) {
             return null;
         }
 
-        return Balance::query()->where('user_id', $user->id)->first()->balance;
+        return $this->balanceRepository->findByUserId($user->id)?->balance;
     }
 }

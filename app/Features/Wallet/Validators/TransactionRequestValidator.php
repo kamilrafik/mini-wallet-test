@@ -7,6 +7,8 @@ use App\Features\Wallet\Dtos\Request\TransactionRequestDto;
 use App\Features\Wallet\Models\Balance;
 use App\Features\Wallet\Models\Transaction;
 use App\Features\Wallet\Models\User;
+use App\Features\Wallet\Repositories\BalanceRepository;
+use App\Features\Wallet\Repositories\UserRepository;
 use App\Features\Wallet\Validators\Contexts\TransactionRequestValidationContext;
 use App\Features\Wallet\Validators\Dtos\TransactionRequestValidationFailureDto;
 use App\Features\Wallet\Validators\Dtos\TransactionRequestValidationResultDto;
@@ -16,11 +18,18 @@ final class TransactionRequestValidator
 {
     private const IDEMPOTENCY_KEY_MIN_LENGTH = 36;
 
+    public function __construct(
+        private readonly UserRepository $userRepository,
+        private readonly BalanceRepository $balanceRepository,
+    )
+    {
+    }
+
     /**
      * @param TransactionRequestDto $dto
      * @return TransactionRequestValidationFailureDto|TransactionRequestValidationSuccessDto
      */
-    public static function validate(TransactionRequestCommissionedDto $dto): TransactionRequestValidationResultDto
+    public function validate(TransactionRequestCommissionedDto $dto): TransactionRequestValidationResultDto
     {
         if (bccomp('0', $dto->amount) >= 0) {
             return new TransactionRequestValidationFailureDto(__('Invalid transaction amount.'));
@@ -42,26 +51,27 @@ final class TransactionRequestValidator
             return new TransactionRequestValidationFailureDto(__('Transaction has been processed already.'));
         }
 
-        $receiver = User::query()->where('uuid', $dto->toUserUuid)->select('id')->first();
+        $receiver = $this->userRepository->findByUuid($dto->toUserUuid);
         if ($receiver === null) {
             return new TransactionRequestValidationFailureDto(__('Receiver not found.'));
         }
 
-        $sender = User::query()->where('uuid', $dto->fromUserUuid)->select('id')->first();
+        $sender = $this->userRepository->findByUuid($dto->fromUserUuid);
         if ($sender === null) {
             return new TransactionRequestValidationFailureDto(__('Sender not found.'));
         }
 
-        $receiverBalance = Balance::query()->where('user_id', $receiver->id)->first();
+        $receiverBalance = $this->balanceRepository->findByUserId($receiver->id);
         if ($receiverBalance === null) {
             return new TransactionRequestValidationFailureDto(__('Receiver balance not found.'));
         }
 
-        $senderBalance = Balance::query()->where('user_id', $sender->id)->first();
+        $senderBalance = $this->balanceRepository->findByUserId($sender->id);
         if ($senderBalance === null) {
             return new TransactionRequestValidationFailureDto(__('Sender balance not found.'));
         }
 
+        // later we check this balance in decrement logic
         if (bccomp($senderBalance->balance, $dto->commissionedAmount) < 0) {
             return new TransactionRequestValidationFailureDto(__('Sender balance is not enough.'));
         }
