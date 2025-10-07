@@ -19,7 +19,7 @@ class TransactionRequestDto
     {
         return new self(
             $request->get('idempotencyKey'),
-            $request->get('fromUserUuid'),
+            $request->user()->uuid,
             $request->get('toUserUuid'),
             $request->get('amount')
         );

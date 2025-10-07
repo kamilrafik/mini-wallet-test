@@ -4,11 +4,13 @@ namespace App\Features\Wallet\Services;
 
 use App\Features\Wallet\Dtos\Request\TransactionRequestCommissionedDto;
 use App\Features\Wallet\Dtos\Request\TransactionRequestDto;
+use App\Features\Wallet\Dtos\Response\TransactionDetailsDto;
 use App\Features\Wallet\Dtos\Response\TransactionRequestProcessingFailureDto;
 use App\Features\Wallet\Dtos\Response\TransactionRequestProcessingResultDto;
 use App\Features\Wallet\Dtos\Response\TransactionRequestProcessingSuccessDto;
 use App\Features\Wallet\Models\Balance;
 use App\Features\Wallet\Models\Transaction;
+use App\Features\Wallet\Models\User;
 use App\Features\Wallet\Policies\TransactionRequestPolicy;
 use App\Features\Wallet\Validators\Contexts\TransactionRequestValidationContext;
 use App\Features\Wallet\Validators\TransactionRequestValidator;
@@ -18,6 +20,8 @@ use Illuminate\Support\Facades\DB;
 
 final class WalletService
 {
+    private const DEFAULT_LATEST_TRANSACTION_COUNT = 20;
+
     private const BCSCALE = 2;
 
     private $prevBcscale = null;
@@ -112,5 +116,46 @@ final class WalletService
         }
 
         return $transaction;
+    }
+
+    /**
+     * @param $userUuid
+     * @param $limit
+     * @return TransactionDetailsDto[]
+     * @throws \Exception
+     */
+    public function getLatestTransactions($userUuid, $limit = self::DEFAULT_LATEST_TRANSACTION_COUNT): array
+    {
+        $user = User::query()->where('uuid', $userUuid)->first();
+        if ($user === null) {
+            throw new \Exception(__('User not found.'));
+        }
+
+        $balance = Balance::query()->where('user_id', $user->id)->first();
+        if ($balance === null) {
+            throw new \Exception(__('Balance not found.'));
+        }
+
+        $transactions = Transaction::query()->where('from_balance_id', $balance->id)->orderByDesc('id')->limit($limit)->get();
+
+        $result = [];
+        foreach ($transactions as $transaction) {
+            $balance = Balance::query()->where('id', $transaction->to_balance_id)->first();
+            $receiver = null;
+            if ($balance !== null) {
+                $receiver = User::query()->where('id', $balance->user_id)->first();
+            }
+
+            $result[] = new TransactionDetailsDto(
+                $transaction->uuid,
+                $transaction->amount,
+                $transaction->created_at,
+                $receiver->uuid ?? null,
+                $receiver->name ?? null,
+                $receiver->email ?? null,
+            );
+        }
+
+        return $result;
     }
 }

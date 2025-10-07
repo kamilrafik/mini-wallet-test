@@ -13,9 +13,12 @@ class WalletController extends Controller
     {
     }
 
-    public function indexTransactions()
+    public function getLatestTransactions(Request $request)
     {
-
+        return response()->json([
+            'success' => true,
+            'transactions' => $this->walletService->getLatestTransactions($request->user()->uuid)
+        ]);
     }
 
     public function createTransaction(Request $request)
