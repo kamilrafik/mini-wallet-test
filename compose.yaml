@@ -5,7 +5,6 @@ services:
             dockerfile: Dockerfile
             args:
                 WWWGROUP: '${WWWGROUP}'
-                MYSQL_CLIENT: mariadb-client
         image: 'sail-8.4/app'
         extra_hosts:
             - 'host.docker.internal:host-gateway'
@@ -23,9 +22,10 @@ services:
         networks:
             - sail
         depends_on:
-            - mariadb
-    mariadb:
-        image: 'mariadb:11'
+            - mysql
+            - soketi
+    mysql:
+        image: 'mysql/mysql-server:8.0'
         ports:
             - '${FORWARD_DB_PORT:-3306}:3306'
         environment:
@@ -34,23 +34,37 @@ services:
             MYSQL_DATABASE: '${DB_DATABASE}'
             MYSQL_USER: '${DB_USERNAME}'
             MYSQL_PASSWORD: '${DB_PASSWORD}'
-            MYSQL_ALLOW_EMPTY_PASSWORD: 'yes'
+            MYSQL_ALLOW_EMPTY_PASSWORD: 1
+            MYSQL_EXTRA_OPTIONS: '${MYSQL_EXTRA_OPTIONS}'
         volumes:
-            - 'sail-mariadb:/var/lib/mysql'
-            - './vendor/laravel/sail/database/mariadb/create-testing-database.sh:/docker-entrypoint-initdb.d/10-create-testing-database.sh'
+            - 'sail-mysql:/var/lib/mysql'
+            - './vendor/laravel/sail/database/mysql/create-testing-database.sh:/docker-entrypoint-initdb.d/10-create-testing-database.sh'
         networks:
             - sail
         healthcheck:
             test:
                 - CMD
-                - healthcheck.sh
-                - '--connect'
-                - '--innodb_initialized'
+                - mysqladmin
+                - ping
+                - '-p${DB_PASSWORD}'
             retries: 3
             timeout: 5s
+    soketi:
+        image: 'quay.io/soketi/soketi:latest-16-alpine'
+        environment:
+            SOKETI_DEBUG: '${SOKETI_DEBUG:-1}'
+            SOKETI_METRICS_SERVER_PORT: '9601'
+            SOKETI_DEFAULT_APP_ID: '${PUSHER_APP_ID}'
+            SOKETI_DEFAULT_APP_KEY: '${PUSHER_APP_KEY}'
+            SOKETI_DEFAULT_APP_SECRET: '${PUSHER_APP_SECRET}'
+        ports:
+            - '${PUSHER_PORT:-6001}:6001'
+            - '${PUSHER_METRICS_PORT:-9601}:9601'
+        networks:
+            - sail
 networks:
     sail:
         driver: bridge
 volumes:
-    sail-mariadb:
+    sail-mysql:
         driver: local
