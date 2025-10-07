@@ -32,3 +32,6 @@ window.Echo = new Echo({
     enabledTransports: ['ws'],
     disableStats: true,
 });
+
+Echo.private(`users.${id}`)
+    .listen('.TransactionCreated', e => console.log(e));
