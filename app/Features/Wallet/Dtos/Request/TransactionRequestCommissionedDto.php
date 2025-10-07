@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Features\Wallet\Dtos;
+namespace App\Features\Wallet\Dtos\Request;
 
 final class TransactionRequestCommissionedDto extends TransactionRequestDto
 {

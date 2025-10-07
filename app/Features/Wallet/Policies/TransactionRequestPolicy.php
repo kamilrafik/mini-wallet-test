@@ -2,8 +2,8 @@
 
 namespace App\Features\Wallet\Policies;
 
-use App\Features\Wallet\Dtos\TransactionRequestCommissionedDto;
-use App\Features\Wallet\Dtos\TransactionRequestDto;
+use App\Features\Wallet\Dtos\Request\TransactionRequestCommissionedDto;
+use App\Features\Wallet\Dtos\Request\TransactionRequestDto;
 
 final class TransactionRequestPolicy
 {

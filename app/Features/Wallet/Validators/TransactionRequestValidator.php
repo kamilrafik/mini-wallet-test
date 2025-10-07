@@ -2,8 +2,8 @@
 
 namespace App\Features\Wallet\Validators;
 
-use App\Features\Wallet\Dtos\TransactionRequestCommissionedDto;
-use App\Features\Wallet\Dtos\TransactionRequestDto;
+use App\Features\Wallet\Dtos\Request\TransactionRequestCommissionedDto;
+use App\Features\Wallet\Dtos\Request\TransactionRequestDto;
 use App\Features\Wallet\Models\Balance;
 use App\Features\Wallet\Models\Transaction;
 use App\Features\Wallet\Models\User;

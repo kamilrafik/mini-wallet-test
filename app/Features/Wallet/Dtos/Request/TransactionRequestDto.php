@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Features\Wallet\Dtos;
+namespace App\Features\Wallet\Dtos\Request;
 
 use Illuminate\Http\Request;
 

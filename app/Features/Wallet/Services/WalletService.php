@@ -2,9 +2,11 @@
 
 namespace App\Features\Wallet\Services;
 
-use App\Features\Wallet\Dtos\TransactionRequestCommissionedDto;
-use App\Features\Wallet\Dtos\TransactionRequestDto;
-use App\Features\Wallet\Dtos\TransactionRequestProcessingResultDto;
+use App\Features\Wallet\Dtos\Request\TransactionRequestCommissionedDto;
+use App\Features\Wallet\Dtos\Request\TransactionRequestDto;
+use App\Features\Wallet\Dtos\Response\TransactionRequestProcessingFailureDto;
+use App\Features\Wallet\Dtos\Response\TransactionRequestProcessingResultDto;
+use App\Features\Wallet\Dtos\Response\TransactionRequestProcessingSuccessDto;
 use App\Features\Wallet\Models\Balance;
 use App\Features\Wallet\Models\Transaction;
 use App\Features\Wallet\Policies\TransactionRequestPolicy;
@@ -20,9 +22,11 @@ final class WalletService
 
     private $prevBcscale = null;
 
-    public function processTransactionRequest(Request $request): TransactionRequestProcessingResultDto
+    public function createTransaction(Request $request): TransactionRequestProcessingResultDto
     {
         $this->setBcscale();
+
+        $transaction = null;
 
         DB::beginTransaction();
         try {
@@ -32,13 +36,13 @@ final class WalletService
 
             $validationResult = TransactionRequestValidator::validate($dto);
             if (!$validationResult->isSuccessful()) {
-                return new TransactionRequestProcessingResultDto(
+                return new TransactionRequestProcessingFailureDto(
                     __('Validation error.'),
                     $validationResult->getErrors()
                 );
             }
 
-            $this->saveTransaction(
+            $transaction = $this->saveTransaction(
                 $dto,
                 $validationResult->context
             );
@@ -46,12 +50,15 @@ final class WalletService
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
-            return TransactionRequestProcessingResultDto::fromException($e);
+            return TransactionRequestProcessingFailureDto::fromException($e);
         } finally {
             $this->restoreBcscale();
         }
 
-        return new TransactionRequestProcessingResultDto();
+        return new TransactionRequestProcessingSuccessDto(
+            $transaction->uuid,
+            $transaction->amount,
+        );
     }
 
     private function setBcscale()
@@ -68,8 +75,10 @@ final class WalletService
     private function saveTransaction(
         TransactionRequestCommissionedDto $dto,
         TransactionRequestValidationContext $validationContext
-    )
+    ): Transaction
     {
+        $transaction = null;
+
         if (!Balance::query()
             ->where([
                 'id' => $validationContext->senderBalanceId,
@@ -90,7 +99,7 @@ final class WalletService
         }
 
         try {
-            Transaction::create([
+            $transaction = Transaction::create([
                 'uuid' => Uuid::generate(),
                 'idempotency_key' => $dto->idempotencyKey,
                 'from_balance_id' => $validationContext->senderBalanceId,
@@ -101,5 +110,7 @@ final class WalletService
         } catch (\Exception $e) {
             throw new \Exception(__('Failed to create transaction.'), $e->getCode(), $e);
         }
+
+        return $transaction;
     }
 }

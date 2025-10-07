@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Features\Wallet\Dtos;
+namespace App\Features\Wallet\Dtos\Response;
 
-final class TransactionRequestProcessingResultDto
+class TransactionRequestProcessingFailureDto extends TransactionRequestProcessingResultDto
 {
     public function __construct(
-        private readonly ?string $primaryError = null,
+        private readonly string $primaryError,
         private readonly ?array $otherErrors = null,
         private readonly mixed $data = null,
     )
@@ -14,9 +14,7 @@ final class TransactionRequestProcessingResultDto
 
     public function isSuccessful(): bool
     {
-        return
-            empty($this->primaryError)
-            && empty($this->otherErrors);
+        return false;
     }
 
     public static function fromException(\Exception $exception): self
