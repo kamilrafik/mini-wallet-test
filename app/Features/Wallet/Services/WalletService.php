@@ -1,16 +1,18 @@
 <?php
 
-namespace App\Features\Wallet\Logic;
+namespace App\Features\Wallet\Services;
 
-use App\Features\Wallet\Logic\Dtos\TransactionRequestCommissionedDto;
+use App\Features\Wallet\Dtos\TransactionRequestCommissionedDto;
+use App\Features\Wallet\Dtos\TransactionRequestDto;
+use App\Features\Wallet\Dtos\TransactionRequestProcessingResultDto;
 use App\Features\Wallet\Models\Balance;
 use App\Features\Wallet\Models\Transaction;
-use App\Features\Wallet\Requests\TransactionRequestDto;
+use App\Features\Wallet\Policies\TransactionRequestPolicy;
 use App\Features\Wallet\Validators\Contexts\TransactionRequestValidationContext;
 use App\Features\Wallet\Validators\TransactionRequestValidator;
+use App\Support\Uuid;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Symfony\Component\Uid\Uuid;
 
 final class WalletService
 {
@@ -26,7 +28,7 @@ final class WalletService
         try {
             $dto = TransactionRequestDto::fromRequest($request);
 
-            $dto = TransactionPolicy::apply($dto, self::BCSCALE);
+            $dto = TransactionRequestPolicy::apply($dto, self::BCSCALE);
 
             $validationResult = TransactionRequestValidator::validate($dto);
             if (!$validationResult->isSuccessful()) {
@@ -89,7 +91,7 @@ final class WalletService
 
         try {
             Transaction::create([
-                'uuid' => Uuid::v7()->toRfc4122(),
+                'uuid' => Uuid::generate(),
                 'idempotency_key' => $dto->idempotencyKey,
                 'from_balance_id' => $validationContext->senderBalanceId,
                 'to_balance_id' => $validationContext->receiverBalanceId,

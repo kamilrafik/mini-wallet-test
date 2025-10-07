@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Features\Wallet\Logic;
+namespace App\Features\Wallet\Dtos;
 
 final class TransactionRequestProcessingResultDto
 {

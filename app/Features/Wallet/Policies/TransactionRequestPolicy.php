@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Features\Wallet\Logic;
+namespace App\Features\Wallet\Policies;
 
-use App\Features\Wallet\Logic\Dtos\TransactionRequestCommissionedDto;
-use App\Features\Wallet\Requests\TransactionRequestDto;
+use App\Features\Wallet\Dtos\TransactionRequestCommissionedDto;
+use App\Features\Wallet\Dtos\TransactionRequestDto;
 
-final class TransactionPolicy
+final class TransactionRequestPolicy
 {
     public static function apply(TransactionRequestDto $dto, $amountPrecision): TransactionRequestCommissionedDto
     {

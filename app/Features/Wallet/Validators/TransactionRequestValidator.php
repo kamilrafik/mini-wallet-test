@@ -2,11 +2,11 @@
 
 namespace App\Features\Wallet\Validators;
 
-use App\Features\Wallet\Logic\Dtos\TransactionRequestCommissionedDto;
+use App\Features\Wallet\Dtos\TransactionRequestCommissionedDto;
+use App\Features\Wallet\Dtos\TransactionRequestDto;
 use App\Features\Wallet\Models\Balance;
 use App\Features\Wallet\Models\Transaction;
 use App\Features\Wallet\Models\User;
-use App\Features\Wallet\Requests\TransactionRequestDto;
 use App\Features\Wallet\Validators\Contexts\TransactionRequestValidationContext;
 use App\Features\Wallet\Validators\Dtos\TransactionRequestValidationFailureDto;
 use App\Features\Wallet\Validators\Dtos\TransactionRequestValidationResultDto;
