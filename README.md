@@ -1,9 +1,9 @@
 # How to run the project locally?
 
-* Use PHP 8.4 locally in command line with the latest version of Composer. Turn off local MySQL/MariaDB to free 3306 port. Turn off local webserver to free 80 port. 
+* Use PHP 8.4 locally in command line with the latest version of Composer (to run commands before Docker will be started with Sail). Turn off local MySQL/MariaDB, Redis, and webserver to free the appropriate ports. 
 * ```composer install```
 * Copy ```.env.example``` to ```.env```
-* ```php artisan sail:install``` - choose MySQL and Soketi to be installed 
+* ```php artisan sail:install``` - choose MySQL, Soketi, and Redis to be installed 
 * ```./vendor/bin/sail up -d```
 * ```./vendor/bin/sail npm install```
 * ```./vendor/bin/sail artisan key:generate``` 
@@ -21,3 +21,4 @@
 * Business logic classes of different types have been placed into single subfolder of Features (but not distributed over all application) because of relatively small size of the functionality.
 * UUIDs have been implemented in all main tables as public IDs for security reasons. UUIDs are generated in code because we generated UUID v7 (not supported in MySQL yet), and need to support master-slave configuration of MySQL server with identical UUIDs in both.
 * Optimistic concurrency control is used in wallet's main method that creates transactions and updates balances.
+* Cache lock with Redis has been implemented to avoid processing identical user requests in case of noticeable latency.

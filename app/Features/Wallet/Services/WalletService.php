@@ -16,26 +16,63 @@ use App\Features\Wallet\Validators\Contexts\TransactionRequestValidationContext;
 use App\Features\Wallet\Validators\TransactionRequestValidator;
 use App\Support\Uuid;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 final class WalletService
 {
     private const DEFAULT_LATEST_TRANSACTION_COUNT = 20;
 
+    private const CACHE_LOCK_TIMEOUT = 15;
+
     private const BCSCALE = 2;
 
     private $prevBcscale = null;
 
-    public function createTransaction(Request $request): TransactionRequestProcessingResultDto
+    protected function saveTransaction(
+        TransactionRequestCommissionedDto $dto,
+        TransactionRequestValidationContext $validationContext
+    ): TransactionRequestProcessingResultDto
     {
-        $this->setBcscale();
-
         $transaction = null;
-
         DB::beginTransaction();
         try {
-            $dto = TransactionRequestDto::fromRequest($request);
+            $transaction = $this->performTransactionSavingOperations(
+                $dto,
+                $validationContext
+            );
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return TransactionRequestProcessingFailureDto::fromException($e);
+        }
 
+        return new TransactionRequestProcessingSuccessDto(
+            $transaction->uuid,
+            $transaction->amount,
+        );
+    }
+
+    public function createTransaction(Request $request): TransactionRequestProcessingResultDto
+    {
+        $dto = TransactionRequestDto::fromRequest($request);
+
+        $lockKey = implode(
+            '|',
+            [
+                $dto->idempotencyKey,
+                $dto->fromUserUuid,
+                $dto->toUserUuid,
+            ]
+        );
+        // cache lock is applied for maximum optimization to avoid processing multiple identical requests
+        $lock = Cache::lock($lockKey, self::CACHE_LOCK_TIMEOUT);
+        if (!$lock->get()) {
+            return new TransactionRequestProcessingFailureDto(__('The request is in processing already.'));
+        }
+
+        $this->setBcscale();
+        try {
             $dto = TransactionRequestPolicy::apply($dto, self::BCSCALE);
 
             $validationResult = TransactionRequestValidator::validate($dto);
@@ -46,23 +83,16 @@ final class WalletService
                 );
             }
 
-            $transaction = $this->saveTransaction(
+            return $this->saveTransaction(
                 $dto,
                 $validationResult->context
             );
-
-            DB::commit();
         } catch (\Exception $e) {
-            DB::rollBack();
             return TransactionRequestProcessingFailureDto::fromException($e);
         } finally {
+            $lock->release();
             $this->restoreBcscale();
         }
-
-        return new TransactionRequestProcessingSuccessDto(
-            $transaction->uuid,
-            $transaction->amount,
-        );
     }
 
     private function setBcscale()
@@ -76,7 +106,7 @@ final class WalletService
         $this->prevBcscale = null;
     }
 
-    private function saveTransaction(
+    private function performTransactionSavingOperations(
         TransactionRequestCommissionedDto $dto,
         TransactionRequestValidationContext $validationContext
     ): Transaction
