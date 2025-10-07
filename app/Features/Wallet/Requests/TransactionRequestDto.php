@@ -4,7 +4,7 @@ namespace App\Features\Wallet\Requests;
 
 use Illuminate\Http\Request;
 
-final class TransactionRequestDto
+class TransactionRequestDto
 {
     public function __construct(
         public readonly string $idempotencyKey,

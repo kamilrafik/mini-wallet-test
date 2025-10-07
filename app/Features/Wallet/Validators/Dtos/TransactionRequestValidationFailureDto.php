@@ -1,18 +1,18 @@
 <?php
 
-namespace App\Features\Wallet\Validators;
+namespace App\Features\Wallet\Validators\Dtos;
 
-final class TransactionRequestValidationResultDto
+final class TransactionRequestValidationFailureDto extends TransactionRequestValidationResultDto
 {
     public function __construct(
-        private readonly array|string|null $errors = null
+        private readonly array|string $errors
     )
     {
     }
 
     public function isSuccessful(): bool
     {
-        return empty($this->errors);
+        return false;
     }
 
     /**
