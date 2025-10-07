@@ -22,3 +22,4 @@
 * UUIDs have been implemented in all main tables as public IDs for security reasons. UUIDs are generated in code because we generated UUID v7 (not supported in MySQL yet), and need to support master-slave configuration of MySQL server with identical UUIDs in both.
 * Optimistic concurrency control is used in wallet's main method that creates transactions and updates balances.
 * Cache lock with Redis has been implemented to avoid processing identical user requests in case of noticeable latency.
+* Development is performed on laptop. That's why so-called "backup" commits are used when draft semi-completed functionality is uploaded every 15-30 minutes while massive updates in code are performed. 
