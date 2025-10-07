@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Features\Wallet\Services\WalletService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Cache;
 
 class WalletController extends Controller
@@ -14,7 +16,12 @@ class WalletController extends Controller
     {
     }
 
-    public function getLatestTransactions(Request $request)
+    public function getBalance(Request $request): JsonResponse
+    {
+        return response()->json($this->walletService->getBalance($request->user()->uuid));
+    }
+
+    public function getLatestTransactions(Request $request): JsonResponse
     {
         return response()->json([
             'success' => true,
@@ -22,7 +29,7 @@ class WalletController extends Controller
         ]);
     }
 
-    public function createTransaction(Request $request)
+    public function createTransaction(Request $request): JsonResponse
     {
         $result = $this->walletService->createTransaction($request);
 

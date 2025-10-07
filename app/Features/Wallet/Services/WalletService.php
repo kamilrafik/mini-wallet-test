@@ -214,4 +214,14 @@ final class WalletService
 
         return $result;
     }
+
+    public function getBalance($userUuid): ?string
+    {
+        $user = User::query()->where('uuid', $userUuid)->first();
+        if (!$user) {
+            return null;
+        }
+
+        return Balance::query()->where('user_id', $user->id)->first()->balance;
+    }
 }

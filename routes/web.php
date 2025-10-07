@@ -24,6 +24,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
+    Route::get('/balance', [WalletController::class, 'getBalance'])->name('wallet.balance');
     Route::get('/transactions', [WalletController::class, 'getLatestTransactions'])->name('wallet.latest-transactions');
     Route::post('/transactions', [WalletController::class, 'createTransaction'])->name('wallet.create-transaction');
 });
