@@ -2,11 +2,14 @@
 
 namespace App\Features\Wallet\Dtos\Response;
 
+use Carbon\Carbon;
+
 class TransactionRequestProcessingSuccessDto extends TransactionRequestProcessingResultDto
 {
     public function __construct(
-        private readonly string $transactionUuid,
-        private readonly string $transactionAmount,
+        public readonly string $uuid,
+        public readonly string $amount,
+        public readonly Carbon $createdAt,
     )
     {
     }
@@ -19,8 +22,9 @@ class TransactionRequestProcessingSuccessDto extends TransactionRequestProcessin
     public function toArray(): array
     {
         return [
-            'transactionUuid' => $this->transactionUuid,
-            'transactionAmount' => $this->transactionAmount,
+            'uuid' => $this->uuid,
+            'amount' => $this->amount,
+            'createdAt' => $this->createdAt->toIso8601String(),
         ];
     }
 }

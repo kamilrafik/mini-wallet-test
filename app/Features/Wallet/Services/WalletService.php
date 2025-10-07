@@ -8,10 +8,13 @@ use App\Features\Wallet\Dtos\Response\TransactionDetailsDto;
 use App\Features\Wallet\Dtos\Response\TransactionRequestProcessingFailureDto;
 use App\Features\Wallet\Dtos\Response\TransactionRequestProcessingResultDto;
 use App\Features\Wallet\Dtos\Response\TransactionRequestProcessingSuccessDto;
+use App\Features\Wallet\Events\TransactionCreated;
+use App\Features\Wallet\Factories\EventFactory;
 use App\Features\Wallet\Models\Balance;
 use App\Features\Wallet\Models\Transaction;
 use App\Features\Wallet\Models\User;
 use App\Features\Wallet\Policies\TransactionRequestPolicy;
+use App\Features\Wallet\Services\Contexts\TransactionCreationContext;
 use App\Features\Wallet\Validators\Contexts\TransactionRequestValidationContext;
 use App\Features\Wallet\Validators\TransactionRequestValidator;
 use App\Support\Uuid;
@@ -29,15 +32,24 @@ final class WalletService
 
     private $prevBcscale = null;
 
+    /** @var null|TransactionCreationContext */
+    private $lastTransactionCreationContext = null;
+
+    public function __construct(
+        private readonly EventFactory $eventFactory,
+    )
+    {
+    }
+
     protected function saveTransaction(
         TransactionRequestCommissionedDto $dto,
         TransactionRequestValidationContext $validationContext
     ): TransactionRequestProcessingResultDto
     {
-        $transaction = null;
+        $transactionContext = null;
         DB::beginTransaction();
         try {
-            $transaction = $this->performTransactionSavingOperations(
+            $transactionContext = $this->performTransactionSavingOperations(
                 $dto,
                 $validationContext
             );
@@ -47,14 +59,20 @@ final class WalletService
             return TransactionRequestProcessingFailureDto::fromException($e);
         }
 
+        $this->lastTransactionCreationContext = $transactionContext;
+
         return new TransactionRequestProcessingSuccessDto(
-            $transaction->uuid,
-            $transaction->amount,
+            $transactionContext->transactionUuid,
+            $transactionContext->transactionAmount,
+            $transactionContext->transactionCreatedAt
         );
     }
 
     public function createTransaction(Request $request): TransactionRequestProcessingResultDto
     {
+        $result = null;
+        $this->lastTransactionCreationContext = null;
+
         $dto = TransactionRequestDto::fromRequest($request);
 
         $lockKey = implode(
@@ -83,7 +101,7 @@ final class WalletService
                 );
             }
 
-            return $this->saveTransaction(
+            $result = $this->saveTransaction(
                 $dto,
                 $validationResult->context
             );
@@ -93,6 +111,12 @@ final class WalletService
             $lock->release();
             $this->restoreBcscale();
         }
+
+        if ($result->isSuccessful()) {
+            event($this->eventFactory->transactionCreated($this->lastTransactionCreationContext));
+        }
+
+        return $result;
     }
 
     private function setBcscale()
@@ -109,10 +133,8 @@ final class WalletService
     private function performTransactionSavingOperations(
         TransactionRequestCommissionedDto $dto,
         TransactionRequestValidationContext $validationContext
-    ): Transaction
+    ): TransactionCreationContext
     {
-        $transaction = null;
-
         if (!Balance::query()
             ->where([
                 'id' => $validationContext->senderBalanceId,
@@ -132,6 +154,7 @@ final class WalletService
             throw new \Exception(__('Failed to add amount into receiver\'s balance.'));
         }
 
+        $transaction = null;
         try {
             $transaction = Transaction::create([
                 'uuid' => Uuid::generate(),
@@ -145,7 +168,13 @@ final class WalletService
             throw new \Exception(__('Failed to create transaction.'), $e->getCode(), $e);
         }
 
-        return $transaction;
+        return new TransactionCreationContext(
+            $transaction->uuid,
+            $transaction->amount,
+            $transaction->created_at,
+            $dto->fromUserUuid,
+            $dto->toUserUuid,
+        );
     }
 
     /**

@@ -22,7 +22,7 @@ final class TransactionDetailsDto
         return [
             'uuid' => $this->uuid,
             'amount' => $this->amount,
-            'createdAt' => $this->createdAt->toDateTimeString(),
+            'createdAt' => $this->createdAt->toIso8601String(),
             'receiverUuid' => $this->receiverUuid,
             'receiverName' => $this->receiverName,
             'receiverEmail' => $this->receiverEmail,
