@@ -1,6 +1,6 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head } from '@inertiajs/vue3';
+import { Head, usePage } from '@inertiajs/vue3';
 import { ref, onMounted } from 'vue'
 import axios from 'axios'
 import {TransactionDetailsDto} from "@/Dtos/TransactionDetailsDto.js";
@@ -30,10 +30,12 @@ const form = ref({ email: null, amount: null })
 const success = ref(null)
 const error = ref(null)
 const defaultErrorValue = 'Unknown internal error.'
+const user = usePage().props.auth.user;
 
 async function getBalance() {
   try {
     const { data } = await api.get('/balance')
+    console.log('Balance:', data);
     balance.value = data.balance;
   } catch (e) {
     console.error('Failed to get balance.', e)
@@ -43,6 +45,7 @@ async function getBalance() {
 async function getTransactions() {
   try {
     const { data } = await api.get('/transactions')
+    console.log('Transactions:', data)
     transactions.value = data.transactions.map(t => new TransactionDetailsDto(t))
   } catch (e) {
     console.error('Failed to get transactions.', e)
@@ -69,7 +72,6 @@ async function postTransaction() {
 }
 
 function listenChannels() {
-  const user = usePage().props.auth.user;
   window.Echo.private(`users.${user.uuid}`)
       .listen('.transaction.created', (e) => {
         console.log('Event:', e)
@@ -100,54 +102,55 @@ onMounted(async () => {
       </h2>
     </template>
 
-    <template>
-      <div class="grid grid-cols-2 gap-6 p-6">
+    <div class="grid grid-cols-2 gap-6 p-6">
 
-        <div class="space-y-6">
+      <div class="space-y-6">
 
-          <div class="text-3xl font-semibold">
-            Balance: {{ Formatter.asCurrency(balance.value) }}
+        <div v-if="balance?.value !== null" class="text-xl font-semibold">
+          Balance: {{ Formatter.asCurrency(balance?.value) }}
+        </div>
+
+        <form @submit.prevent="postTransaction" class="space-y-3">
+          <p v-if="error?.value !== null" class="text-red-600 text-sm mt-2">{{ error?.value }}</p>
+          <p v-if="success?.value !== null" class="text-green-600 text-sm mt-2">{{ success?.value }}</p>
+          <div>
+            <label class="block text-sm font-medium">Email</label>
+            <input v-model="form.email" type="email" required class="border rounded w-full p-2" />
           </div>
-
-          <form @submit.prevent="postTransaction" class="space-y-3">
-            <p v-if="error?.value !== null" class="text-red-600 text-sm mt-2">{{ error.value }}</p>
-            <p v-if="success?.value !== null" class="text-green-600 text-sm mt-2">{{ success.value }}</p>
-            <div>
-              <label class="block text-sm font-medium">Email</label>
-              <input v-model="form.email" type="email" required class="border rounded w-full p-2" />
-            </div>
-            <div>
-              <label class="block text-sm font-medium">Amount</label>
-              <input v-model.number="form.amount" type="number" required class="border rounded w-full p-2" />
-            </div>
-            <button
-                type="submit"
-                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
-            >
-              Send payment
-            </button>
-          </form>
-        </div>
-
-        <div>
-          <h3 class="text-xl font-semibold mb-3">Transactions</h3>
-          <ul class="space-y-2">
-            <li
-                v-for="transaction in transactions.map(t => new TransactionDetailsPresentedDto(t))"
-                :key="transaction.uuid"
-                class="flex justify-between border-b pb-1"
-            >
-              <span :style="'color:' + transaction.color">
-                {{ transaction.amount }}
-              </span>
-              <span class="text-gray-600">
-                {{ transaction.counterpart }}
-              </span>
-            </li>
-          </ul>
-        </div>
+          <div>
+            <label class="block text-sm font-medium">Amount</label>
+            <input v-model.number="form.amount" type="number" required class="border rounded w-full p-2" />
+          </div>
+          <button
+              type="submit"
+              class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+          >
+            Send payment
+          </button>
+        </form>
       </div>
-    </template>
+
+      <div>
+        <h3 class="text-xl font-semibold mb-3">Transactions</h3>
+        <div v-if="!transactions.length">
+          Not found.
+        </div>
+        <ul class="space-y-2" v-if="transactions.length">
+          <li
+              v-for="transaction in transactions.map(t => new TransactionDetailsPresentedDto(t))"
+              :key="transaction.uuid"
+              class="flex justify-between border-b pb-1"
+          >
+            <span :style="'color:' + transaction.color">
+              {{ transaction.amount }}
+            </span>
+            <span class="text-gray-600">
+              {{ transaction.counterpart }}
+            </span>
+          </li>
+        </ul>
+      </div>
+    </div>
 
   </AuthenticatedLayout>
 </template>

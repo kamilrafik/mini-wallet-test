@@ -2,7 +2,7 @@ export class Formatter {
     static asCurrency(value) {
         const number = Number(value)
         if (isNaN(number)) {
-            console.error('NaN:', value);
+            console.warn('NaN:', value);
             return '(unknown)'
         }
         const locale = navigator.language
