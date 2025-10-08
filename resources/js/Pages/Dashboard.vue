@@ -106,13 +106,13 @@ onMounted(async () => {
 
       <div class="space-y-6">
 
-        <div v-if="balance?.value !== null" class="text-xl font-semibold">
-          Balance: {{ Formatter.asCurrency(balance?.value) }}
+        <div v-if="balance !== null" class="text-xl font-semibold">
+          Balance: {{ Formatter.asCurrency(balance) }}
         </div>
 
         <form @submit.prevent="postTransaction" class="space-y-3">
-          <p v-if="error?.value !== null" class="text-red-600 text-sm mt-2">{{ error?.value }}</p>
-          <p v-if="success?.value !== null" class="text-green-600 text-sm mt-2">{{ success?.value }}</p>
+          <p v-if="error !== null" class="text-red-600 text-sm mt-2">{{ error }}</p>
+          <p v-if="success !== null" class="text-green-600 text-sm mt-2">{{ success }}</p>
           <div>
             <label class="block text-sm font-medium">Email</label>
             <input v-model="form.email" type="email" required class="border rounded w-full p-2" />

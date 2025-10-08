@@ -1,6 +1,6 @@
 export class Formatter {
     static asCurrency(value) {
-        const number = Number(value)
+        const number = parseFloat(value)
         if (isNaN(number)) {
             console.warn('NaN:', value);
             return '(unknown)'
