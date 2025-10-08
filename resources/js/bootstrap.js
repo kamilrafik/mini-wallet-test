@@ -26,9 +26,10 @@ window.Echo = new Echo({
     broadcaster: import.meta.env.VITE_BROADCAST_DRIVER,
     key: import.meta.env.VITE_PUSHER_APP_KEY,
     cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER ?? 'mt1',
-    wsHost: import.meta.env.VITE_PUSHER_HOST ?? window.location.hostname,
+    wsHost: import.meta.env.VITE_PUSHER_HOST ?? '127.0.0.1',
     wsPort: import.meta.env.VITE_PUSHER_PORT,
     forceTLS: false,
     enabledTransports: ['ws'],
     disableStats: true,
+    withCredentials: true,
 });

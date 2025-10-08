@@ -5,6 +5,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\WalletController;
+use Illuminate\Support\Facades\Broadcast;
 
 Route::get('/', function () {
     return Inertia::render('Home', [
@@ -28,5 +29,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/transactions', [WalletController::class, 'getLatestTransactions'])->name('wallet.latest-transactions');
     Route::post('/transactions', [WalletController::class, 'createTransaction'])->name('wallet.create-transaction');
 });
+
+Broadcast::routes(['middleware' => ['auth:sanctum']]);
 
 require __DIR__.'/auth.php';
