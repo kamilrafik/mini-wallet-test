@@ -1,5 +1,5 @@
 /**
- * The structure could be more deep, like 'sender' => [] etc, but it is not important for the test task.
+ * The structure could be more deep, like 'sender': {} etc, but it is not important for the test task.
  */
 export class TransactionDetailsDto {
     constructor({
