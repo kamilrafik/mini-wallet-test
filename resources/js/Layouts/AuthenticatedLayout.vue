@@ -5,12 +5,7 @@ import Dropdown from '@/Components/Dropdown.vue';
 import DropdownLink from '@/Components/DropdownLink.vue';
 import NavLink from '@/Components/NavLink.vue';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink.vue';
-import {Link, usePage} from '@inertiajs/vue3';
-
-const user = usePage().props.auth.user;
-window.Echo.private(`users.${user.uuid}`)
-    .listen('.transaction.created', e => console.log(e))
-    .listen('.balance.updated', e => console.log(e))
+import {Link} from '@inertiajs/vue3';
 
 const showingNavigationDropdown = ref(false);
 </script>

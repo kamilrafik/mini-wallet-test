@@ -11,7 +11,7 @@ final class TransactionDetailsDto
         private readonly string $uuid,
         private readonly string $amount,
         private readonly Carbon $createdAt,
-        private readonly TransactionSign $sign,
+        private readonly ?TransactionSign $sign = null,
         private readonly ?string $senderUuid = null,
         private readonly ?string $senderName = null,
         private readonly ?string $senderEmail = null,
@@ -22,13 +22,17 @@ final class TransactionDetailsDto
     {
     }
 
+    /**
+     * The structure could be more deep, like 'sender' => [] etc, but it is not important for the test task.
+     * @return array
+     */
     public function toArray(): array
     {
         return [
             'uuid' => $this->uuid,
             'amount' => $this->amount,
             'createdAt' => $this->createdAt->toIso8601String(),
-            'sign' => $this->sign->value,
+            'sign' => $this->sign?->value,
             'senderUuid' => $this->senderUuid,
             'senderName' => $this->senderName,
             'senderEmail' => $this->senderEmail,

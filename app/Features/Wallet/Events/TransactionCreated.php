@@ -2,6 +2,7 @@
 
 namespace App\Features\Wallet\Events;
 
+use App\Features\Wallet\Dtos\Response\TransactionDetailsDto;
 use Carbon\Carbon;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
@@ -42,16 +43,18 @@ class TransactionCreated implements ShouldBroadcast
 
     public function broadcastWith(): array
     {
-        return [
-            'uuid' => $this->uuid,
-            'amount' => $this->amount,
-            'createdAt' => $this->createdAt,
-            'senderUuid' => $this->senderUuid,
-            'senderName' => $this->senderName,
-            'senderEmail' => $this->senderEmail,
-            'receiverUuid' => $this->receiverUuid,
-            'receiverName' => $this->receiverName,
-            'receiverEmail' => $this->receiverEmail,
-        ];
+        return (new TransactionDetailsDto(
+            $this->uuid,
+            $this->amount,
+            $this->createdAt,
+            // to avoid relying on call context we pass null here, sign will be detected in frontend
+            null,
+            $this->senderUuid,
+            $this->senderName,
+            $this->senderEmail,
+            $this->receiverUuid,
+            $this->receiverName,
+
+        ))->toArray();
     }
 }

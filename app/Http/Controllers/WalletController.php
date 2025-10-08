@@ -18,7 +18,10 @@ class WalletController extends Controller
 
     public function getBalance(Request $request): JsonResponse
     {
-        return response()->json($this->walletService->getBalance($request->user()->uuid));
+        return response()->json([
+            'success' => true,
+            'balance' => $this->walletService->getBalance($request->user()->uuid),
+        ]);
     }
 
     public function getLatestTransactions(Request $request): JsonResponse
