@@ -30,6 +30,4 @@ Route::middleware('auth')->group(function () {
     Route::post('/transactions', [WalletController::class, 'createTransaction'])->name('wallet.create-transaction');
 });
 
-Broadcast::routes(['middleware' => ['auth:sanctum']]);
-
 require __DIR__.'/auth.php';
