@@ -1,6 +1,7 @@
 <?php
 
 return [
+    'default' => 'pusher',
     'pusher' => [
         'driver' => env('BROADCAST_DRIVER'),
         'key' => env('PUSHER_APP_KEY'),
