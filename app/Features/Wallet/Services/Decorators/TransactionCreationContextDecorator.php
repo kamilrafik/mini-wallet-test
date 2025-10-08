@@ -22,7 +22,7 @@ class TransactionCreationContextDecorator
         $sender = $this->userRepository->findByUuid($context->senderUuid);
         $senderBalance = $sender ? $this->balanceRepository->findByUserId($sender->id) : null;
         $receiver = $this->userRepository->findByUuid($context->receiverUuid);
-        $receiverBalance = $receiver ? $this->balanceRepository->findByUserId($context->receiverUuid) : null;
+        $receiverBalance = $receiver ? $this->balanceRepository->findByUserId($receiver->id) : null;
 
         return new RichTransactionCreationContext(
             $context->transactionUuid,

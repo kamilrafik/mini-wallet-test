@@ -20,12 +20,5 @@ class RichTransactionCreationContext extends TransactionCreationContext
         public readonly string $receiverBalance
     )
     {
-        parent::__construct(
-            $this->transactionUuid,
-            $this->transactionAmount,
-            $this->transactionCreatedAt,
-            $this->senderUuid,
-            $this->receiverUuid
-        );
     }
 }

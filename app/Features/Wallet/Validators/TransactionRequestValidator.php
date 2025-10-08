@@ -39,7 +39,7 @@ final class TransactionRequestValidator
             return new TransactionRequestValidationFailureDto(__('Invalid commissioned transaction amount.'));
         }
 
-        if (bccomp($dto->amount, $dto->commissionedAmount) < 0) {
+        if (bccomp($dto->amount, $dto->commissionedAmount) > 0) {
             return new TransactionRequestValidationFailureDto(__('Commissioned amount turned out to be less than original amount.'));
         }
 
@@ -59,6 +59,10 @@ final class TransactionRequestValidator
         $sender = $this->userRepository->findByUuid($dto->fromUserUuid);
         if ($sender === null) {
             return new TransactionRequestValidationFailureDto(__('Sender not found.'));
+        }
+
+        if ($receiver->id === $sender->id) {
+            return new TransactionRequestValidationFailureDto(__('Sending to yourself is not allowed.'));
         }
 
         $receiverBalance = $this->balanceRepository->findByUserId($receiver->id);
