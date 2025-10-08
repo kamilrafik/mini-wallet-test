@@ -13,11 +13,5 @@ final class TransactionRequestCommissionedDto extends TransactionRequestDto
         public readonly string $commission,
     )
     {
-        parent::__construct(
-            $idempotencyKey,
-            $fromUserUuid,
-            $toUserUuid,
-            $amount
-        );
     }
 }

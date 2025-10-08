@@ -10,7 +10,7 @@ class UserTransactionRequestMapper
 {
     public static function mapFromRequest(Request $request): TransactionRequestDto
     {
-        $user = User::query()->where('email', $request->get('toUserEmail'))->select('uuid')->first();
+        $user = User::query()->where('email', $request->get('email'))->select('uuid')->first();
         if (!$user) {
             throw new \Exception(__('User not found by email.'));
         }

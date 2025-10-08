@@ -26,9 +26,14 @@ api.interceptors.response.use(
 
 const balance = ref(null)
 const transactions = ref([])
-const form = ref({ email: null, amount: null })
+const form = ref({
+  email: null,
+  amount: null,
+  idempotencyKey: null
+})
 const success = ref(null)
-const error = ref(null)
+const primaryError = ref(null)
+const otherErrors = ref(null)
 const defaultErrorValue = 'Unknown internal error.'
 const user = usePage().props.auth.user;
 
@@ -53,9 +58,11 @@ async function getTransactions() {
 }
 
 async function postTransaction() {
-  error.value = null
+  primaryError.value = null
+  otherErrors.value = null
   success.value = null
   try {
+    form.value.idempotencyKey = crypto.randomUUID()
     // here we parse errors by ourselves
     const { data } = await axios.post('/transactions', form.value)
     if (data.success) {
@@ -63,11 +70,12 @@ async function postTransaction() {
       success.value = 'Payment has been successfully sent for processing.'
     } else {
       console.error('Business logic error:', data)
-      error.value = data.result.primaryError ?? defaultErrorValue
+      primaryError.value = data.result.primaryError ?? defaultErrorValue
+      otherErrors.value = data.result.otherErrors ?? null
     }
   } catch (e) {
     console.error('API error:', e)
-    error.value = defaultErrorValue
+    primaryError.value = defaultErrorValue
   }
 }
 
@@ -111,7 +119,12 @@ onMounted(async () => {
         </div>
 
         <form @submit.prevent="postTransaction" class="space-y-3">
-          <p v-if="error !== null" class="text-red-600 text-sm mt-2">{{ error }}</p>
+          <div v-if="primaryError !== null" class="text-red-600 text-sm mt-2">{{ primaryError }}</div>
+          <ul v-if="otherErrors && otherErrors.length" style="margin-top: 0">
+            <li v-for="error in otherErrors">
+              <span class="text-red-600 text-sm">{{ error }}</span>
+            </li>
+          </ul>
           <p v-if="success !== null" class="text-green-600 text-sm mt-2">{{ success }}</p>
           <div>
             <label class="block text-sm font-medium">Email</label>
