@@ -32,8 +32,3 @@ window.Echo = new Echo({
     enabledTransports: ['ws'],
     disableStats: true,
 });
-
-Echo.private(`users.${id}`)
-    .listen('.transaction.created', e => console.log(e));
-Echo.private(`users.${id}`)
-    .listen('.balance.updated', e => console.log(e));
