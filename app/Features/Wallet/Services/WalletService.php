@@ -10,6 +10,7 @@ use App\Features\Wallet\Dtos\Response\TransactionRequestProcessingFailureDto;
 use App\Features\Wallet\Dtos\Response\TransactionRequestProcessingResultDto;
 use App\Features\Wallet\Dtos\Response\TransactionRequestProcessingSuccessDto;
 use App\Features\Wallet\Dispatchers\EventDispatcher;
+use App\Features\Wallet\Mappers\UserTransactionRequestMapper;
 use App\Features\Wallet\Models\Balance;
 use App\Features\Wallet\Models\Transaction;
 use App\Features\Wallet\Models\User;
@@ -68,11 +69,21 @@ final class WalletService
         return $this->transactionCreationContextDecorator->decorate($context);
     }
 
-    public function createTransaction(Request $request): TransactionRequestProcessingResultDto
+    public function createTransactionFromRequest(Request $request): TransactionRequestProcessingResultDto
+    {
+        $dto = TransactionRequestDto::fromRequest($request);
+        return $this->createTransaction($dto);
+    }
+
+    public function createTransactionFromUserRequest(Request $request): TransactionRequestProcessingResultDto
+    {
+        $dto = UserTransactionRequestMapper::mapFromRequest($request);
+        return $this->createTransaction($dto);
+    }
+
+    protected function createTransaction(TransactionRequestDto $dto): TransactionRequestProcessingResultDto
     {
         $transactionCreationContext = null;
-
-        $dto = TransactionRequestDto::fromRequest($request);
 
         // cache lock is applied for maximum optimization to avoid processing multiple identical requests
         $lockKey = implode(

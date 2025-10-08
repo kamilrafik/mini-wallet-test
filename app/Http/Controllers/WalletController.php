@@ -31,7 +31,7 @@ class WalletController extends Controller
 
     public function createTransaction(Request $request): JsonResponse
     {
-        $result = $this->walletService->createTransaction($request);
+        $result = $this->walletService->createTransactionFromUserRequest($request);
 
         return response()->json([
             'success' => $result->isSuccessful(),
