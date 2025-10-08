@@ -23,6 +23,7 @@
 * Optimistic concurrency control is used in wallet's main method that creates transactions and updates balances.
 * Cache lock with Redis has been implemented to avoid processing identical user requests in case of noticeable latency. 
 * No logic has been placed into Eloquent models for maximum scalability in the future, however models by themselves are used to avoid writing raw SQL queries. Repositories have been created for the most often used operations only.
-* Matching between backend and frontend DTOs is incomplete but for test task is enough. The concept of common DTOs is deomonstrated well enough.
+* Matching between backend and frontend DTOs is incomplete but for test task is enough. The concept of common DTOs is demonstrated well enough.
 * Structure of some DTOs could be less flat. But current is enough for test task.
+* Performance and locking have not been tested, just implementation concept has been demonstrated in code.
 * Development is performed on laptop. That's why so-called "backup" commits are used when draft semi-completed functionality is uploaded every 15-30 minutes while massive updates in code are performed.
