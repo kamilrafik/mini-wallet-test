@@ -9,7 +9,7 @@ use App\Features\Wallet\Dtos\Response\TransactionDetailsDto;
 use App\Features\Wallet\Dtos\Response\TransactionRequestProcessingFailureDto;
 use App\Features\Wallet\Dtos\Response\TransactionRequestProcessingResultDto;
 use App\Features\Wallet\Dtos\Response\TransactionRequestProcessingSuccessDto;
-use App\Features\Wallet\Factories\EventDispatcher;
+use App\Features\Wallet\Dispatchers\EventDispatcher;
 use App\Features\Wallet\Models\Balance;
 use App\Features\Wallet\Models\Transaction;
 use App\Features\Wallet\Models\User;

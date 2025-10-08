@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Features\Wallet\Factories;
+namespace App\Features\Wallet\Dispatchers;
 
 use App\Features\Wallet\Dtos\Response\TransactionRequestProcessingSuccessDto;
 use App\Features\Wallet\Events\BalanceUpdated;
