@@ -1,11 +1,11 @@
 export class TransactionDetailsPresentedDto {
-    constructor({
+    constructor(
         uuid,
         amount,
         createdAt,
         color,
         counterpart
-                }) {
+    ) {
         this.uuid = uuid
         this.amount = amount
         this.createdAt = createdAt

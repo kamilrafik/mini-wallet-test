@@ -47,7 +47,7 @@ export class TransactionPresenter {
             counterpart.name = transaction.receiverName
             counterpart.email = transaction.receiverEmail
         } else if (sign === TransactionSign.PLUS) {
-            counterpart.name = transaction.senderUuid
+            counterpart.name = transaction.senderName
             counterpart.email = transaction.senderEmail
         }
 

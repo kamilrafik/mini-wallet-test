@@ -5,7 +5,8 @@ import { ref, onMounted } from 'vue'
 import axios from 'axios'
 import {TransactionDetailsDto} from "@/Dtos/TransactionDetailsDto.js";
 import {Formatter} from "@/Utils/Formatter.js";
-import {TransactionDetailsPresentedDto} from "@/Dtos/TransactionDetailsPresentedDto.js";
+import {TransactionPresenter} from "@/Transformers/TransactionPresenter.js";
+import {computed} from "vue";
 
 const api = axios.create({
   baseURL: '/',
@@ -36,6 +37,10 @@ const primaryError = ref(null)
 const otherErrors = ref(null)
 const defaultErrorValue = 'Unknown internal error.'
 const user = usePage().props.auth.user;
+
+const presentedTransactions = computed(() =>
+  transactions.value.map(t => TransactionPresenter.map(user, t))
+)
 
 async function getBalance() {
   try {
@@ -148,20 +153,23 @@ onMounted(async () => {
         <div v-if="!transactions.length">
           Not found.
         </div>
-        <ul class="space-y-2" v-if="transactions.length">
-          <li
-              v-for="transaction in transactions.map(t => new TransactionDetailsPresentedDto(t))"
+        <div class="space-y-2" v-if="transactions.length">
+          <div
+              v-for="transaction in presentedTransactions"
               :key="transaction.uuid"
-              class="flex justify-between border-b pb-1"
+              class="border-b pb-1"
           >
-            <span :style="'color:' + transaction.color">
+            <div :class="transaction.color">
               {{ transaction.amount }}
-            </span>
-            <span class="text-gray-600">
+            </div>
+            <div class="text-gray-600">
               {{ transaction.counterpart }}
-            </span>
-          </li>
-        </ul>
+            </div>
+            <div class="text-gray-600">
+              {{ transaction.createdAt }}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 

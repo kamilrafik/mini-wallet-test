@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Features\Wallet\Dtos\Response\TransactionDetailsDto;
 use App\Features\Wallet\Services\WalletService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
 
 class WalletController extends Controller
@@ -28,7 +30,9 @@ class WalletController extends Controller
     {
         return response()->json([
             'success' => true,
-            'transactions' => $this->walletService->getLatestTransactions($request->user()->uuid)
+            'transactions' => Arr::map($this->walletService->getLatestTransactions($request->user()->uuid), function (TransactionDetailsDto $transaction) {
+                return $transaction->toArray();
+            })
         ]);
     }
 
