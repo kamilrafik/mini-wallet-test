@@ -77,7 +77,17 @@ final class WalletService
 
     public function createTransactionFromUserRequest(Request $request): TransactionRequestProcessingResultDto
     {
-        $dto = UserTransactionRequestMapper::mapFromRequest($request);
+        try {
+            $dto = UserTransactionRequestMapper::mapFromRequest($request);
+        } catch (\Exception $e) {
+            // not using fromException() because set of possible transformation failures is predictable
+            return new TransactionRequestProcessingFailureDto(
+                $e->getMessage(),
+                null,
+                $e
+            );
+        }
+
         return $this->createTransaction($dto);
     }
 
