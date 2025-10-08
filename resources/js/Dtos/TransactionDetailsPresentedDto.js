@@ -1,6 +1,3 @@
-/**
- * The structure could be more deep, like 'counterpart': {} etc, but it is not important for the test task.
- */
 export class TransactionDetailsPresentedDto {
     constructor({
         uuid,

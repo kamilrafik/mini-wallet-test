@@ -21,6 +21,8 @@
 * Business logic classes of different types have been placed into single subfolder of Features (but not distributed over all application) because of relatively small size of the functionality.
 * UUIDs have been implemented in all main tables as public IDs for security reasons. UUIDs are generated in code because we generated UUID v7 (not supported in MySQL yet), and need to support master-slave configuration of MySQL server with identical UUIDs in both. However, full replacement of IDs with UUIDs in authentication logic has not been performed because it will require serious intrusion into built-in Laravel logic which is definitely outside of the scope of the task. So, UUIDs are implemented as security concept primarily to demonstrate understanding of this topic.
 * Optimistic concurrency control is used in wallet's main method that creates transactions and updates balances.
-* Cache lock with Redis has been implemented to avoid processing identical user requests in case of noticeable latency.
-* Development is performed on laptop. That's why so-called "backup" commits are used when draft semi-completed functionality is uploaded every 15-30 minutes while massive updates in code are performed. 
+* Cache lock with Redis has been implemented to avoid processing identical user requests in case of noticeable latency. 
 * No logic has been placed into Eloquent models for maximum scalability in the future, however models by themselves are used to avoid writing raw SQL queries. Repositories have been created for the most often used operations only.
+* Matching between backend and frontend DTOs is incomplete but for test task is enough. The concept of common DTOs is deomonstrated well enough.
+* Structure of some DTOs could be less flat. But current is enough for test task.
+* Development is performed on laptop. That's why so-called "backup" commits are used when draft semi-completed functionality is uploaded every 15-30 minutes while massive updates in code are performed.
