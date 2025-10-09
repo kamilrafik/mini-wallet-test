@@ -33,10 +33,6 @@ final class WalletService
 
     private const CACHE_LOCK_TIMEOUT = 15;
 
-    private const BCSCALE = 2;
-
-    private $prevBcscale = null;
-
     public function __construct(
         private readonly TransactionRequestValidator $transactionRequestValidator,
         private readonly EventDispatcher $eventDispatcher,
@@ -109,8 +105,6 @@ final class WalletService
             return new TransactionRequestProcessingFailureDto(__('The request is in processing already.'));
         }
 
-        // such project-level setting is enough for test task; in production project it may be done in separate classes that are specific for each kind of operation
-        $this->setBcscale();
         try {
             $dto = TransactionCommissionPolicy::apply($dto);
 
@@ -132,7 +126,6 @@ final class WalletService
             return TransactionRequestProcessingFailureDto::fromException($e);
         } finally {
             $lock->release();
-            $this->restoreBcscale();
         }
 
         $this->eventDispatcher->dispatchTransactionCreated($transactionCreationContext);
@@ -142,17 +135,6 @@ final class WalletService
             $transactionCreationContext->transactionAmount,
             $transactionCreationContext->transactionCreatedAt
         );
-    }
-
-    private function setBcscale()
-    {
-        $this->prevBcscale = bcscale(self::BCSCALE);
-    }
-
-    private function restoreBcscale()
-    {
-        bcscale($this->prevBcscale);
-        $this->prevBcscale = null;
     }
 
     /**
@@ -196,14 +178,16 @@ final class WalletService
                 'to_balance_id' => $validationContext->receiverBalanceId,
                 'amount' => $dto->commissionedAmount,
                 'commission' => $dto->commission,
+                'counterpart_amount' => $dto->amount,
             ]);
         } catch (\Exception $e) {
-            throw new \Exception(__('Failed to create transaction.'), $e->getCode(), $e);
+            throw new \Exception(__('Failed to create transaction.'), (int) $e->getCode(), $e);
         }
 
         return new TransactionCreationContext(
             $transaction->uuid,
             $transaction->amount,
+            $transaction->counterpart_amount,
             $transaction->created_at,
             $dto->fromUserUuid,
             $dto->toUserUuid,
@@ -238,6 +222,7 @@ final class WalletService
             ->get();
 
         $result = [];
+        /** @var Transaction $transaction */
         foreach ($transactions as $transaction) {
             // no reasons to cache anything here; it should be done either on storage level or on presentation level for old transactions
             $senderBalance = $this->balanceRepository->findById($transaction->from_balance_id);
@@ -248,8 +233,9 @@ final class WalletService
             $result[] = new TransactionDetailsDto(
                 $transaction->uuid,
                 $transaction->amount,
+                $transaction->counterpart_amount,
                 $transaction->created_at,
-                $balance->id === $transaction->to_balance_id ? TransactionSign::Plus : TransactionSign::Minus,
+                ($balance->id === $transaction->to_balance_id) ? TransactionSign::Plus : TransactionSign::Minus,
                 $sender?->uuid,
                 $sender?->name,
                 $sender?->email,

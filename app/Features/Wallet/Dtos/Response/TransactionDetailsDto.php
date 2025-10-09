@@ -10,6 +10,7 @@ final class TransactionDetailsDto
     public function __construct(
         private readonly string $uuid,
         private readonly string $amount,
+        private readonly string $counterpartAmount,
         private readonly Carbon $createdAt,
         private readonly ?TransactionSign $sign = null,
         private readonly ?string $senderUuid = null,
@@ -31,6 +32,7 @@ final class TransactionDetailsDto
         return [
             'uuid' => $this->uuid,
             'amount' => $this->amount,
+            'counterpartAmount' => $this->counterpartAmount,
             'createdAt' => $this->createdAt->toIso8601String(),
             'sign' => $this->sign?->value,
             'senderUuid' => $this->senderUuid,

@@ -17,6 +17,7 @@ class EventDispatcher
         event(new TransactionCreated(
             $context->transactionUuid,
             $context->transactionAmount,
+            $context->transactionCounterpartAmount,
             $context->transactionCreatedAt,
             $context->senderUuid,
             $context->senderName,

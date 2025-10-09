@@ -34,6 +34,7 @@ return new class extends Migration
             $table->foreign('to_balance_id')->references('id')->on('balances');
             $table->decimal('amount', 65, 2);
             $table->decimal('commission', 65, 2);
+            $table->decimal('counterpart_amount', 65, 2);
             $table->timestamps();
         });
     }

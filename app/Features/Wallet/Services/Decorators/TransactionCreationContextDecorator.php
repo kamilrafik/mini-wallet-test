@@ -27,6 +27,7 @@ class TransactionCreationContextDecorator
         return new RichTransactionCreationContext(
             $context->transactionUuid,
             $context->transactionAmount,
+            $context->transactionCounterpartAmount,
             $context->transactionCreatedAt,
             $context->senderUuid,
             $sender?->name,

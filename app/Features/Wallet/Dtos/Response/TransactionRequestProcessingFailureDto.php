@@ -19,9 +19,14 @@ class TransactionRequestProcessingFailureDto extends TransactionRequestProcessin
 
     public static function fromException(\Exception $exception): self
     {
+        $otherErrors = [$exception->getMessage()];
+        if ($exception->getPrevious() !== null) {
+            $otherErrors[] = $exception->getPrevious()->getMessage();
+        }
+
         return new self(
             __('Unknown internal error.'),
-            [$exception->getMessage()],
+            $otherErrors,
             $exception->getTraceAsString(),
         );
     }

@@ -25,6 +25,7 @@ api.interceptors.response.use(
     }
 )
 
+const isLoading = ref(false)
 const balance = ref(null)
 const transactions = ref([])
 const form = ref({
@@ -63,6 +64,7 @@ async function getTransactions() {
 }
 
 async function postTransaction() {
+  isLoading.value = true
   primaryError.value = null
   otherErrors.value = null
   success.value = null
@@ -81,6 +83,8 @@ async function postTransaction() {
   } catch (e) {
     console.error('API error:', e)
     primaryError.value = defaultErrorValue
+  } finally {
+    isLoading.value = false
   }
 }
 
@@ -103,6 +107,21 @@ onMounted(async () => {
 
 </script>
 
+<style>
+.loader {
+  border: 4px solid #ccc;
+  border-top: 4px solid #3490dc;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  100% { transform: rotate(360deg); }
+}
+</style>
+
 <template>
   <Head title="Dashboard" />
 
@@ -124,6 +143,13 @@ onMounted(async () => {
         </div>
 
         <form @submit.prevent="postTransaction" class="space-y-3">
+          <div
+              v-if="isLoading"
+              class="absolute inset-0 bg-white/70 flex items-center justify-center z-10"
+          >
+            <span class="loader"></span>
+          </div>
+
           <div v-if="primaryError !== null" class="text-red-600 text-sm mt-2">{{ primaryError }}</div>
           <ul v-if="otherErrors && otherErrors.length" style="margin-top: 0">
             <li v-for="error in otherErrors">
@@ -137,7 +163,7 @@ onMounted(async () => {
           </div>
           <div>
             <label class="block text-sm font-medium">Amount</label>
-            <input v-model.number="form.amount" type="number" required class="border rounded w-full p-2" />
+            <input v-model.number="form.amount" type="number" pattern="^[0-9]+$" placeholder="0" required class="border rounded w-full p-2" />
           </div>
           <button
               type="submit"
