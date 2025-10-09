@@ -9,6 +9,7 @@ use App\Features\Wallet\Models\Transaction;
 use App\Features\Wallet\Models\User;
 use App\Features\Wallet\Repositories\BalanceRepository;
 use App\Features\Wallet\Repositories\UserRepository;
+use App\Features\Wallet\Support\BcMath;
 use App\Features\Wallet\Validators\Contexts\TransactionRequestValidationContext;
 use App\Features\Wallet\Validators\Dtos\TransactionRequestValidationFailureDto;
 use App\Features\Wallet\Validators\Dtos\TransactionRequestValidationResultDto;
@@ -21,6 +22,7 @@ final class TransactionRequestValidator
     public function __construct(
         private readonly UserRepository $userRepository,
         private readonly BalanceRepository $balanceRepository,
+        private readonly BcMath $bcMath,
     )
     {
     }
@@ -31,15 +33,15 @@ final class TransactionRequestValidator
      */
     public function validate(TransactionRequestCommissionedDto $dto): TransactionRequestValidationResultDto
     {
-        if (bccomp('0', $dto->amount) >= 0) {
+        if ($this->bcMath->comp('0', $dto->amount) >= 0) {
             return new TransactionRequestValidationFailureDto(__('Invalid transaction amount.'));
         }
 
-        if (bccomp('0', $dto->commissionedAmount) >= 0) {
+        if ($this->bcMath->comp('0', $dto->commissionedAmount) >= 0) {
             return new TransactionRequestValidationFailureDto(__('Invalid commissioned transaction amount.'));
         }
 
-        if (bccomp($dto->amount, $dto->commissionedAmount) > 0) {
+        if ($this->bcMath->comp($dto->amount, $dto->commissionedAmount) > 0) {
             return new TransactionRequestValidationFailureDto(__('Commissioned amount turned out to be less than original amount.'));
         }
 
@@ -76,7 +78,7 @@ final class TransactionRequestValidator
         }
 
         // later we check this balance in decrement logic
-        if (bccomp($senderBalance->balance, $dto->commissionedAmount) < 0) {
+        if ($this->bcMath->comp($senderBalance->balance, $dto->commissionedAmount) < 0) {
             return new TransactionRequestValidationFailureDto(__('Sender balance is not enough.'));
         }
 

@@ -4,19 +4,17 @@ namespace App\Features\Wallet\Policies;
 
 use App\Features\Wallet\Dtos\Request\TransactionRequestCommissionedDto;
 use App\Features\Wallet\Dtos\Request\TransactionRequestDto;
+use App\Features\Wallet\Support\BcMath;
 
 final class TransactionCommissionPolicy
 {
-    /**
-     * To work with such values as 1.5%
-     */
-    private const BCSCALE = 3;
-
     public static function apply(TransactionRequestDto $dto): TransactionRequestCommissionedDto
     {
-        $commission = bcmul(
+        $bcMath = new BcMath();
+
+        $commission = $bcMath->mul(
             $dto->amount,
-            bcdiv(config('wallet.commission'), 100, self::BCSCALE)
+            $bcMath->normalizePercentage(config('wallet.commission'))
         );
 
         return new TransactionRequestCommissionedDto(
@@ -24,7 +22,7 @@ final class TransactionCommissionPolicy
             $dto->fromUserUuid,
             $dto->toUserUuid,
             $dto->amount,
-            bcadd($dto->amount, $commission),
+            $bcMath->add($dto->amount, $commission),
             $commission
         );
     }

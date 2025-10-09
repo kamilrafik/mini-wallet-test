@@ -33,10 +33,6 @@ final class WalletService
 
     private const CACHE_LOCK_TIMEOUT = 15;
 
-    private const BCSCALE = 2;
-
-    private $prevBcscale = null;
-
     public function __construct(
         private readonly TransactionRequestValidator $transactionRequestValidator,
         private readonly EventDispatcher $eventDispatcher,
@@ -109,8 +105,6 @@ final class WalletService
             return new TransactionRequestProcessingFailureDto(__('The request is in processing already.'));
         }
 
-        // such project-level setting is enough for test task; in production project it may be done in separate classes that are specific for each kind of operation
-        $this->setBcscale();
         try {
             $dto = TransactionCommissionPolicy::apply($dto);
 
@@ -132,7 +126,6 @@ final class WalletService
             return TransactionRequestProcessingFailureDto::fromException($e);
         } finally {
             $lock->release();
-            $this->restoreBcscale();
         }
 
         $this->eventDispatcher->dispatchTransactionCreated($transactionCreationContext);
@@ -142,17 +135,6 @@ final class WalletService
             $transactionCreationContext->transactionAmount,
             $transactionCreationContext->transactionCreatedAt
         );
-    }
-
-    private function setBcscale()
-    {
-        $this->prevBcscale = bcscale(self::BCSCALE);
-    }
-
-    private function restoreBcscale()
-    {
-        bcscale($this->prevBcscale);
-        $this->prevBcscale = null;
     }
 
     /**
