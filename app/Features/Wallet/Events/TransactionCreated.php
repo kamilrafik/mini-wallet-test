@@ -56,7 +56,7 @@ class TransactionCreated implements ShouldBroadcast
             $this->senderEmail,
             $this->receiverUuid,
             $this->receiverName,
-
+            $this->receiverEmail
         ))->toArray();
     }
 }
