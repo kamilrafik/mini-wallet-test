@@ -14,10 +14,8 @@ final class TransactionCommissionPolicy
 
     public static function apply(TransactionRequestDto $dto): TransactionRequestCommissionedDto
     {
-        $amount = bcround($dto->amount, self::BCSCALE);
-
         $commission = bcmul(
-            $amount,
+            $dto->amount,
             bcdiv(config('wallet.commission'), 100, self::BCSCALE)
         );
 
@@ -25,8 +23,8 @@ final class TransactionCommissionPolicy
             $dto->idempotencyKey,
             $dto->fromUserUuid,
             $dto->toUserUuid,
-            $amount,
-            bcadd($amount, $commission),
+            $dto->amount,
+            bcadd($dto->amount, $commission),
             $commission
         );
     }
