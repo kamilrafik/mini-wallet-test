@@ -163,7 +163,7 @@ onMounted(async () => {
           </div>
           <div>
             <label class="block text-sm font-medium">Amount</label>
-            <input v-model.number="form.amount" type="number" required class="border rounded w-full p-2" />
+            <input v-model.number="form.amount" type="number" pattern="^[0-9]+$" placeholder="0" required class="border rounded w-full p-2" />
           </div>
           <button
               type="submit"
