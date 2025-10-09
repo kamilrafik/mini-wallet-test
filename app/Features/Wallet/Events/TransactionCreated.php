@@ -17,6 +17,7 @@ class TransactionCreated implements ShouldBroadcast
     public function __construct(
         private readonly string $uuid,
         private readonly string $amount,
+        private readonly string $counterpartAmount,
         private readonly Carbon $createdAt,
         private readonly string $senderUuid,
         private readonly string $senderName,
@@ -46,6 +47,7 @@ class TransactionCreated implements ShouldBroadcast
         return (new TransactionDetailsDto(
             $this->uuid,
             $this->amount,
+            $this->counterpartAmount,
             $this->createdAt,
             // to avoid relying on call context we pass null here, sign will be detected in frontend
             null,

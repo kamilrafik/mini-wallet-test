@@ -5,6 +5,7 @@ export class TransactionDetailsDto {
     constructor({
         uuid,
         amount,
+        counterpartAmount,
         createdAt,
         sign,
         senderUuid,
@@ -16,6 +17,7 @@ export class TransactionDetailsDto {
                 }) {
         this.uuid = uuid
         this.amount = amount
+        this.counterpartAmount = counterpartAmount;
         this.createdAt = createdAt
         this.sign = sign
         this.senderUuid = senderUuid

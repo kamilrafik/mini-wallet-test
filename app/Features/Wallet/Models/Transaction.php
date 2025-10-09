@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property int $to_balance_id
  * @property string $amount
  * @property string $commission
+ * @property string $counterpart_amount
  * @property Carbon $created_at
  * @property Carbon $updated_at
  */
@@ -25,5 +26,6 @@ class Transaction extends Model
         'to_balance_id',
         'amount',
         'commission',
+        'counterpart_amount',
     ];
 }

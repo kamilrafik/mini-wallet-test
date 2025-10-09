@@ -23,6 +23,13 @@ export class TransactionPresenter {
             sign = ''
         }
 
+        let amount = null;
+        if (sign === TransactionSign.PLUS) {
+            amount = transaction.counterpartAmount;
+        } else {
+            amount = transaction.amount;
+        }
+
         let counterpart = {
             name: null,
             email: null,
@@ -54,7 +61,7 @@ export class TransactionPresenter {
 
         return new TransactionDetailsPresentedDto(
             transaction.uuid,
-            sign + Formatter.asCurrency(transaction.amount),
+            sign + Formatter.asCurrency(amount),
             Formatter.asDateTime(transaction.createdAt),
             TransactionColor[sign],
             counterpart.toString()
