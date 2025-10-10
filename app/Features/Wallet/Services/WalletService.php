@@ -107,6 +107,8 @@ final class WalletService
         }
 
         try {
+            // technically it would be more clear solution to apply validation twice, firstly to original transaction request and then to commissioned one; but for test task it is not critical
+
             $dto = TransactionCommissionPolicy::apply($dto);
 
             $validationResult = $this->transactionRequestValidator->validate($dto);
