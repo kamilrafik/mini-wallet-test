@@ -91,7 +91,8 @@ final class WalletService
     {
         $transactionCreationContext = null;
 
-        // cache lock is applied for maximum optimization to avoid processing multiple identical requests
+        // cache lock is applied for maximum optimization to avoid processing multiple identical requests;
+        // it is possible to go even further, and keep here $dto->fromUserUuid only with locking all operations on balance while some another is proceeded
         $lockKey = implode(
             '|',
             [
