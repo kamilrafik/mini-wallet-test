@@ -15,7 +15,8 @@ class BcMath
     private const PERCENTAGE_NORMALIZATION_SCALE = 3;
 
     public function __construct(
-        public int $scale = self::SCALE
+        private int $scale = self::SCALE,
+        private int $percentageNormalizationScale = self::PERCENTAGE_NORMALIZATION_SCALE
     )
     {
     }
@@ -45,12 +46,25 @@ class BcMath
         return bccomp($value1, $value2, $this->scale);
     }
 
-    public function normalizePercentage(string $value): string
+    public function calcPercentage(string $value, string $percentage): string
     {
-        return bcdiv($value, 100, self::PERCENTAGE_NORMALIZATION_SCALE);
+        $value = $this->normalizePercentagedValue($value);
+        $percentage = $this->normalizePercentage($percentage);
+        $result = bcmul($value, $percentage, $this->percentageNormalizationScale);
+        return bcround($result, $this->scale);
     }
 
-    public function round(string $value): string
+    private function normalizePercentagedValue(string $value): string
+    {
+        return bcround($value, $this->percentageNormalizationScale);
+    }
+
+    private function normalizePercentage(string $value): string
+    {
+        return bcdiv($value, 100, $this->percentageNormalizationScale);
+    }
+
+    public function normalizeValue(string $value): string
     {
         return bcround($value, self::SCALE);
     }

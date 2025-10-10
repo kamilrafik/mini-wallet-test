@@ -16,7 +16,7 @@ class TransactionRequestDto
         string $amount
     )
     {
-        $this->amount = (new BcMath())->round($amount);
+        $this->amount = (new BcMath())->normalizeValue($amount);
     }
 
     public static function fromRequest(Request $request): self
@@ -25,7 +25,7 @@ class TransactionRequestDto
             $request->get('idempotencyKey'),
             $request->user()->uuid,
             $request->get('toUserUuid'),
-            (new BcMath())->round($request->get('amount'))
+            $request->get('amount')
         );
     }
 }

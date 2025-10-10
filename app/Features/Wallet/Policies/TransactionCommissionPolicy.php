@@ -12,9 +12,9 @@ final class TransactionCommissionPolicy
     {
         $bcMath = new BcMath();
 
-        $commission = $bcMath->mul(
+        $commission = $bcMath->calcPercentage(
             $dto->amount,
-            $bcMath->normalizePercentage(config('wallet.commission'))
+            config('wallet.commission')
         );
 
         return new TransactionRequestCommissionedDto(
